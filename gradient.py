@@ -43,6 +43,7 @@ def convert_to_image(width: int = 900, length: int = 900, start_color: tuple = (
             val = (width / i) / width
         else:
             val = (length / i) / length
+            
         if val < 0.1:
             raise ValueError("Brightness scale is too low, will cause repeated values.")
 
