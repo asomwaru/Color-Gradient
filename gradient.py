@@ -1,9 +1,10 @@
 import numpy as np
 from PIL import Image, ImageDraw
+from math import gcd
 
 
 def convert_to_image(width: int = 900, length: int = 900, start_color: tuple = (0, 255, 128),
-                     save: bool = True, directions: str = "XNN", brightness: tuple = (4, 4, 4)):
+                     save: bool = True, directions: str = "XNN", brightness: tuple = (4, 4, 4), **kwargs):
     """
     Args:
         width: Width of image. Defaults to 900
@@ -35,8 +36,15 @@ def convert_to_image(width: int = 900, length: int = 900, start_color: tuple = (
         raise ValueError("Must supply 3 values. Put 0 if rgb value is N.")
 
     for i, x in zip(brightness, directions):
-        if x != 'N' and i < 4:
-            raise ValueError("Value given for rgb value is less than 4.")
+        if x == 'N':
+            continue
+
+        if x == 'X':
+            val = (width / i) / width
+        else:
+            val = (length / i) / length
+        if val < 0.1:
+            raise ValueError("Brightness scale is too low, will cause repeated values.")
 
     l, w = length, width
     arr = np.array(Image.new('RGB', (w, l), color=start_color))
@@ -64,12 +72,12 @@ def convert_to_image(width: int = 900, length: int = 900, start_color: tuple = (
     return arr
 
 
-def average_chunks(picture: np.array, rows: int, cols: int, save: bool = False):
+def average_chunks(picture: np.array, y_scale: int, x_scale: int, save: bool = False):
     """
     Args:
          picture: Array of rgb values for picture gradient
-         rows: Number of rows to descale by
-         cols: Number of columns to descale by
+         y_scale: Number to descale y by
+         x_scale: Number to descale x by
          save: save the picture
 
     Return:
@@ -79,17 +87,19 @@ def average_chunks(picture: np.array, rows: int, cols: int, save: bool = False):
         ValueError: If rows or cols do not divide easily into passed picture
     """
     pic_y, pic_x, _ = picture.shape
-    if pic_y % rows != 0:
-        raise ValueError("Rows do not split the image perfectly.")
+    if pic_y % y_scale != 0:
+        raise ValueError("Rows do not split the image perfectly. Suggest value would be {}.".format(
+            max(common_factor(pic_x, pic_y))))
 
-    if pic_x % cols != 0:
-        raise ValueError("Columns do not split the image perfectly.")
+    if pic_x % x_scale != 0:
+        raise ValueError("Columns do not split the image perfectly. Suggest value would be {}".format(
+            max(common_factor(pic_x, pic_y))))
 
-    new_pic = np.array(Image.new('RGB', (pic_x // cols, pic_y // rows), color=(255, 255, 255)))
+    new_pic = np.array(Image.new('RGB', (pic_x // x_scale, pic_y // y_scale), color=(255, 255, 255)))
 
-    for y in range(pic_y // rows):
-        for x in range(pic_x // cols):
-            mat = picture[y * rows:(y * rows) + rows, x * cols:(x * cols) + cols]
+    for y in range(pic_y // y_scale):
+        for x in range(pic_x // x_scale):
+            mat = picture[y * y_scale:(y * y_scale) + y_scale, x * x_scale:(x * x_scale) + x_scale]
 
             values = np.array([j for i in mat for j in i])
 
@@ -133,7 +143,17 @@ def upscale(picture: np.array, size: int, save: bool = True):
     if save:
         im.save('new_pic.png')
 
-# if __name__ == '__main__':
-#     grad = convert_to_image(directions="XYN", brightness=(4, 4, 0))
-#     new = average_chunks(grad, 100, 100)
-#     upscale(new, 100)
+
+def common_factor(num1, num2):
+    n = []
+    g = gcd(num1, num2)
+    for i in range(1, g + 1):
+        if g % i == 0:
+            n.append(i)
+    return max(n)
+
+
+if __name__ == '__main__':
+    grad = convert_to_image(length=900, width=1440, directions="XYN", brightness=(8, 5, 0))
+    new = average_chunks(grad, 180, 180)
+    upscale(new, 180)
