@@ -2,36 +2,62 @@ import numpy as np
 from PIL import Image, ImageDraw
 
 
-def convert_to_image(width: int = 900, length: int = 900, start_color: tuple = (0, 255, 128), brightness: int = 4,
-                     save: bool = True):
+def convert_to_image(width: int = 900, length: int = 900, start_color: tuple = (0, 255, 128),
+                     save: bool = True, directions: str = "XNN", brightness: tuple = (4, 4, 4)):
     """
     Args:
         width: Width of image. Defaults to 900
         length: Length of image. Defaults to 900
         start_color: Starting rgb value for gradient
         brightness: Brightness for gradient progression. Values must be 4 or more for gradient to be correct
+        directions: 3 letters for the rgb which are 'N', 'X', 'Y'
+        brightness: brightness for each of the rgb directions
 
     Returns:
         arr: The array of color values for the picture
 
     Raises:
-        ValueError: If dimensions are less than 0 or if brightness is less than 4
+        ValueError: If dimensions are less than 0 or if bright variables to not meet requirement
+        ZeroDivisionError: if an rgb direction is not 'N' and the brightness value is less than 4
     """
     if length <= 0 or width <= 0:
         raise ValueError("Dimensions cannot be less than 0.")
 
-    if brightness < 4:
-        raise ValueError("Brightness cannot be less 4 for gradient.")
+    directions = directions.upper()
+
+    if directions is None:
+        raise ValueError("Must supply directions for gradient")
+    elif len(directions) != 3:
+        raise ValueError("Must have 3 direction values ('N', 'X', 'Y').")
+    elif sum([directions.count('X'), directions.count('Y'), directions.count('N')]) != 3:
+        raise ValueError("Wrong values supplied for directions.")
+
+    if len(brightness) != 3:
+        raise ValueError("Must supply 3 values. Put 0 if rgb value is N.")
+
+    for i, x in zip(brightness, directions):
+        if x != 'N' and i < 4:
+            raise ZeroDivisionError("Value given for rgb value is less than 4.")
 
     l, w = length, width
     arr = np.array(Image.new('RGB', (w, l), color=start_color))
 
     for y in range(l):
         for x in range(w):
-            arr[y, x][0] = (y / brightness)
-            arr[y, x][1] = (x / 6)
-            # arr[y, x][2] = (x / 6)
-            pass
+            if directions[0] == 'X':
+                arr[y, x][0] = x / brightness[0]
+            elif directions[0] == 'Y':
+                arr[y, x][0] = y / brightness[0]
+
+            if directions[1] == 'X':
+                arr[y, x][1] = x / brightness[1]
+            elif directions[1] == 'Y':
+                arr[y, x][1] = y / brightness[1]
+
+            if directions[2] == 'X':
+                arr[y, x][2] = x / brightness[2]
+            elif directions[2] == 'Y':
+                arr[y, x][2] = y / brightness[2]
 
     if save:
         Image.fromarray(arr.astype('uint8'), 'RGB').save("gradient.png")
@@ -43,8 +69,8 @@ def average_chunks(picture: np.array, rows: int, cols: int, save: bool = False):
     """
     Args:
          picture: Array of rgb values for picture gradient
-         rows: How many rows for descaled picture
-         cols: How many columns for descaled picture
+         rows: How many rows to descale by
+         cols: How many columns to descale by
          save: To save picture or not
 
     Return:
@@ -82,17 +108,20 @@ def average_chunks(picture: np.array, rows: int, cols: int, save: bool = False):
     return new_pic
 
 
-def upscale(picture: np.array, size: int):
+def upscale(picture: np.array, size: int, save: bool = True):
     """
     Args:
          picture: Picture array
          size: rgb upscale value
+         save: To save image or not
 
     Raises:
         ValueError: If size is less than 0
     """
+
     if size <= 0:
         raise ValueError("Cannot upscale image with value less than 1.")
+
     pic_y, pic_x, _ = picture.shape
 
     im = Image.new('RGB', (pic_x * size, pic_y * size), (255, 255, 255))
@@ -102,10 +131,10 @@ def upscale(picture: np.array, size: int):
         for x in range(pic_x):
             draw.rectangle([(x * size, y * size), ((x + 1) * size, (y + 1) * size)], fill=tuple(picture[y, x]))
 
-    im.save('new_pic.png')
+    if save:
+        im.save('new_pic.png')
 
-
-if __name__ == '__main__':
-    grad = convert_to_image()
-    new = average_chunks(grad, 100, 100)
-    upscale(new, 100)
+# if __name__ == '__main__':
+#     grad = convert_to_image(directions="XYN", brightness=(4, 4, 0))
+#     new = average_chunks(grad, 100, 100)
+#     upscale(new, 100)
