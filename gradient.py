@@ -43,7 +43,7 @@ def convert_to_image(width: int = 900, length: int = 900, start_color: tuple = (
             val = (width / i) / width
         else:
             val = (length / i) / length
-            
+
         if val < 0.1:
             raise ValueError("Brightness scale is too low, will cause repeated values.")
 
@@ -88,13 +88,14 @@ def average_chunks(picture: np.array, y_scale: int, x_scale: int, save: bool = F
         ValueError: If rows or cols do not divide easily into passed picture
     """
     pic_y, pic_x, _ = picture.shape
+
     if pic_y % y_scale != 0:
         raise ValueError("Rows do not split the image perfectly. Suggest value would be {}.".format(
-            max(common_factor(pic_x, pic_y))))
+            common_factor(pic_x, pic_y)))
 
     if pic_x % x_scale != 0:
         raise ValueError("Columns do not split the image perfectly. Suggest value would be {}".format(
-            max(common_factor(pic_x, pic_y))))
+            common_factor(pic_x, pic_y)))
 
     new_pic = np.array(Image.new('RGB', (pic_x // x_scale, pic_y // y_scale), color=(255, 255, 255)))
 
@@ -153,8 +154,7 @@ def common_factor(num1, num2):
             n.append(i)
     return max(n)
 
-
-if __name__ == '__main__':
-    grad = convert_to_image(length=900, width=1440, directions="XYN", brightness=(8, 5, 0))
-    new = average_chunks(grad, 180, 180)
-    upscale(new, 180)
+# if __name__ == '__main__':
+#     grad = convert_to_image(length=1050, width=1680, directions="XYN", brightness=(8, 5, 0))
+#     new = average_chunks(grad, 180, 180)
+#     upscale(new, 180)
