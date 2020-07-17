@@ -21,12 +21,14 @@ parser.add_argument('-r', '--rows', dest='rows', type=int, action='store', defau
 parser.add_argument('-c', '--cols', '--columns', dest='columns', type=int, action='store', default=9,
                     help="Columns for grid.")
 
+parser.add_argument('-m', '--mini', dest='mini', action='store_true', help="Save as a mini color grid.")
+
 args = parser.parse_args()
 
 args.brightness = tuple(args.brightness)
 args.start_color = tuple(args.start_color)
 
-if args.grid:
+if args.mini:
     args = vars(args)
     del args['grid']
 
@@ -37,11 +39,27 @@ if args.grid:
     del args['columns']
 
     gradient_pic = grad.convert_to_image(**args, save=False)
+    new_pic = grad.average_chunks(gradient_pic, args['length'] // rows, args['width'] // cols, save=True)
+
+elif args.grid:
+    args = vars(args)
+    del args['grid']
+
+    rows = args['rows']
+    cols = args['columns']
+
+    del args['rows']
+    del args['columns']
+    del args['mini']
+
+    gradient_pic = grad.convert_to_image(**args, save=False)
     new_pic = grad.average_chunks(gradient_pic, args['length'] // rows, args['width'] // cols)
     grad.upscale(new_pic, args['length'], True)
+
 else:
     args = vars(args)
     del args['grid']
     del args['rows']
     del args['columns']
+    del args['mini']
     gradient_pic = grad.convert_to_image(**args)

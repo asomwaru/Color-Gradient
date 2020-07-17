@@ -17,8 +17,7 @@ def convert_to_image(width: int = 900, length: int = 900, start_color: tuple = (
         arr: The array of color values for the picture
 
     Raises:
-        ValueError: If dimensions are less than 0 or if bright variables to not meet requirement
-        ZeroDivisionError: if an rgb direction is not 'N' and the brightness value is less than 4
+        ValueError: If dimensions are less than 0 or if bright variables do not meet requirement
     """
     if length <= 0 or width <= 0:
         raise ValueError("Dimensions cannot be less than 0.")
@@ -37,7 +36,7 @@ def convert_to_image(width: int = 900, length: int = 900, start_color: tuple = (
 
     for i, x in zip(brightness, directions):
         if x != 'N' and i < 4:
-            raise ZeroDivisionError("Value given for rgb value is less than 4.")
+            raise ValueError("Value given for rgb value is less than 4.")
 
     l, w = length, width
     arr = np.array(Image.new('RGB', (w, l), color=start_color))
@@ -69,9 +68,9 @@ def average_chunks(picture: np.array, rows: int, cols: int, save: bool = False):
     """
     Args:
          picture: Array of rgb values for picture gradient
-         rows: How many rows to descale by
-         cols: How many columns to descale by
-         save: To save picture or not
+         rows: Number of rows to descale by
+         cols: Number of columns to descale by
+         save: save the picture
 
     Return:
         new_pic: Averaged picture array
